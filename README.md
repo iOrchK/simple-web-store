@@ -1,2 +1,2 @@
 # simple-store-web
-Una simple aplicación web desarrollada con Nest.js con un CRUD de productos
+Una simple aplicación web desarrollada con NextJS que contiene un CRUD de productos
