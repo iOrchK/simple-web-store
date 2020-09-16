@@ -1,0 +1,28 @@
+{
+  "name": "simple-web-store",
+  "version": "1.0.0",
+  "description": "Una simple aplicación web desarrollada con Nest.js con un CRUD de productos",
+  "author": "Jorge Chable",
+  "private": true,
+  "license": "Copyleft",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@material-ui/core": "^4.11.0",
+    "@material-ui/icons": "^4.9.1",
+    "axios": "^0.20.0",
+    "classnames": "^2.2.6",
+    "gray-matter": "^4.0.2",
+    "next": "9.3.5",
+    "postcss-flexbugs-fixes": "^4.2.1",
+    "postcss-preset-env": "^6.7.0",
+    "react": "16.13.1",
+    "react-dom": "16.13.1",
+    "react-redux": "^7.2.1",
+    "react-router-dom": "^5.2.0",
+    "sweetalert2": "^10.0.2"
+  }
+}
