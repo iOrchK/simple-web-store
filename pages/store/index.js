@@ -138,17 +138,15 @@ export default function Store({ products }) {
   /*************************************** */
   const paramDefault = null;
   let [ProductSelected, setProductSelected] = useState(paramDefault);
-  async function HandleEdit(event, item) {
-    event.preventDefault();
+  const HandleEdit = async (item) => {
     setProductSelected(item);
     console.log(ProductSelected);
-  }
+  };
 
-  async function HandleDelete(itemId) {
-    event.preventDefault();
+  const HandleDelete = async (itemId) => {
     // await deleteProduct(itemId);
     console.log(itemId);
-  }
+  };
   /*************************************** */
 
   const tableBody = (
@@ -169,7 +167,6 @@ export default function Store({ products }) {
               color="primary"
               startIcon={<EditIcon />}
               small="true"
-              onClick={HandleEdit($event, row)}
             >
               Editar
             </Button>
@@ -178,7 +175,6 @@ export default function Store({ products }) {
               color="secondary"
               startIcon={<DeleteIcon />}
               small="true"
-              onClick={HandleDelete($event, row._id)}
             >
               Eliminar
             </Button>
