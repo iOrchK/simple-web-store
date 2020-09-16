@@ -29,34 +29,34 @@ const useStyles = makeStyles({
 export default function SimpleCard() {
   const classes = useStyles();
   const nombre = (
-    <p>
+    <Typography variant="h5" component="h2">
       <AccountBox fontSize="small" />
       &nbsp; Jorge Carlos Chable Sanchez
-    </p>
+    </Typography>
   );
   const email = (
-    <p>
+    <Typography variant="body2" component="p">
       <Email fontSize="small" />
       &nbsp; yahicimosclick9193@gmail.com
-    </p>
+    </Typography>
   );
   const telefono = (
-    <p>
+    <Typography variant="body2" component="p">
       <Phone fontSize="small" />
       &nbsp; 9993310711
-    </p>
+    </Typography>
   );
   const whatsApp = (
-    <p>
+    <Typography variant="body2" component="p">
       <WhatsApp fontSize="small" />
       &nbsp; 9992771993
-    </p>
+    </Typography>
   );
   const escuela = (
-    <p>
+    <Typography variant="body2" component="p">
       <School fontSize="small" />
       &nbsp; Centro de Estudios Superios CTM
-    </p>
+    </Typography>
   );
   const cursos = "";
 
@@ -75,21 +75,11 @@ export default function SimpleCard() {
           >
             {Date()}
           </Typography>
-          <Typography variant="h5" component="h2">
-            {nombre}
-          </Typography>
-          <Typography variant="body2" component="p">
-            {email}
-          </Typography>
-          <Typography variant="body2" component="p">
-            {telefono}
-          </Typography>
-          <Typography variant="body2" component="p">
-            {whatsApp}
-          </Typography>
-          <Typography variant="body2" component="p">
-            {escuela}
-          </Typography>
+          {nombre}
+          {email}
+          {telefono}
+          {whatsApp}
+          {escuela}
         </CardContent>
       </Card>
     </Layout>
