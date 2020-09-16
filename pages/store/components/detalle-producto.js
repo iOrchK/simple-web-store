@@ -35,13 +35,11 @@ const categories = ["Bebidas", "Limpieza", "Botanas", "Cremeria"];
 
 export default function DetalleProductoComponent({ ...props }) {
   console.log(props.selected);
-  // const [SelectedProduct, setSelectedProduct] = useState(null);
-
-  // console.log(props.selected);
+  const [state, setState] = useState({ loading: false });
   const classes = useStyles();
   const anchor = "right";
 
-  let [state, setState] = useState({
+  const [ProductDetail, setProductDetailState] = useState({
     [anchor]: false,
   });
 
@@ -49,7 +47,7 @@ export default function DetalleProductoComponent({ ...props }) {
   //   if (SelectedProduct !== props.selected) {
   //     setSelectedProduct(props.selected);
   //     console.log("Show product");
-  //     setState({ ...state, [anchor]: true });
+  //     setProductDetailState({ ...ProductDetail, [anchor]: true });
   //   }
   //   console.log("component updated");
   // });
@@ -69,7 +67,7 @@ export default function DetalleProductoComponent({ ...props }) {
     ) {
       return;
     }
-    setState({ ...state, [anchor]: open });
+    setProductDetailState({ ...ProductDetail, [anchor]: open });
   };
 
   /********************************* */
@@ -173,7 +171,7 @@ export default function DetalleProductoComponent({ ...props }) {
   };
 
   const ClickCancel = () => {
-    setState({ ...state, [anchor]: false });
+    setProductDetailState({ ...ProductDetail, [anchor]: false });
   };
 
   const ClickSave = async () => {
@@ -189,6 +187,7 @@ export default function DetalleProductoComponent({ ...props }) {
       console.log("Invalid Fields");
       return;
     }
+    setState({ loading: true });
     console.log("Saving");
     let body = {
       NameProduct: NameProduct.model,
@@ -207,6 +206,7 @@ export default function DetalleProductoComponent({ ...props }) {
       ClickCancel();
       alert("Producto creado");
     }
+    setState({ loading: false });
   };
 
   /********************* */
@@ -227,7 +227,7 @@ export default function DetalleProductoComponent({ ...props }) {
       }
       <Drawer
         anchor={anchor}
-        open={state[anchor]}
+        open={ProductDetail[anchor]}
         variant="persistent"
         onClose={toggleDrawer(anchor, false)}
       >
