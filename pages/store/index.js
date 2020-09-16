@@ -28,8 +28,12 @@ import { Close } from "@material-ui/icons";
 import Chip from "@material-ui/core/Chip";
 import { TextField } from "@material-ui/core";
 import { MenuItem } from "@material-ui/core";
+import useSWR from "swr";
+import axios from "axios";
 
 const viewTitle = "Store";
+
+// Change TableCell Style
 const StyledTableCell = withStyles((theme) => ({
   head: {
     backgroundColor: theme.palette.common.black,
@@ -40,6 +44,7 @@ const StyledTableCell = withStyles((theme) => ({
   },
 }))(TableCell);
 
+// Table Pagination Actions
 function TablePaginationActions(props) {
   const theme = useTheme();
   const { count, page, rowsPerPage, onChangePage } = props;
@@ -102,6 +107,7 @@ function TablePaginationActions(props) {
   );
 }
 
+// Pagination Actions Prop Validation
 TablePaginationActions.propTypes = {
   count: PropTypes.number.isRequired,
   onChangePage: PropTypes.func.isRequired,
@@ -111,52 +117,46 @@ TablePaginationActions.propTypes = {
 
 const categories = ["Todas", "Bebidas", "Limpieza", "Botanas", "Cremeria"];
 
-export default function Store({ products }) {
+const urlProducts = "http://localhost:3001/products";
+const fetcher = (url) => axios.get(url).then((res) => res.data);
+
+export default function Store() {
+  // Hooks for useState
+  const paramDefault = null;
+  const [ProductSelected, setProductSelected] = useState(paramDefault);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [state, setState] = useState({ loading: false });
-  // const [FilterCategory, setFilterCategory] = useState("Todas");
-  // const [FilterNameProduct, setFilterNameProduct] = useState("");
-  // const HandleFilterCategory = (e) => {
-  //   setFilterCategory(e.target.value || "Todas");
-  // };
-  // const HandleFilterNameProduct = (e) => {
-  //   setFilterNameProduct(e.target.value || "");
-  // };
 
-  // const FilteredProducts = async () => {
-  //   if (FilterCategory === "Todas") {
-  //     if (FilterNameProduct === "") {
-  //       return products;
-  //     } else {
-  //       return products.filter((e) =>
-  //         e.NameProduct.includes(FilterNameProduct)
-  //       );
-  //     }
-  //   } else {
-  //     if (FilterNameProduct === "") {
-  //       return products.filter((e) => e.Category === FilterCategory);
-  //     } else {
-  //       return products.filter(
-  //         (e) =>
-  //           e.NameProduct.includes(FilterNameProduct) ||
-  //           e.Category === FilterCategory
-  //       );
-  //     }
-  //   }
-  // };
+  // Fetch data
+  const { data, error } = useSWR(urlProducts, fetcher);
 
-  const emptyRows =
-    rowsPerPage - Math.min(rowsPerPage, products.length - page * rowsPerPage);
+  // Data Fetching Error
+  if (error) {
+    return (
+      <Layout>
+        <Head>
+          <title>{viewTitle}</title>
+        </Head>
+        <div>Error al cargar los productos</div>
+      </Layout>
+    );
+  }
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
+  // Data Fetching Loading
+  if (!data) {
+    return (
+      <Layout>
+        <Head>
+          <title>{viewTitle}</title>
+        </Head>
+        <div>Cargando ...</div>
+      </Layout>
+    );
+  }
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
+  // Data fetching OK
+  let products = data;
 
   const tableHead = (
     <TableHead>
@@ -172,14 +172,13 @@ export default function Store({ products }) {
     </TableHead>
   );
 
-  /*************************************** */
-  const paramDefault = null;
-  let [ProductSelected, setProductSelected] = useState(paramDefault);
+  // Handle Edit Product
   const HandleEdit = async (e) => {
     let item = JSON.parse(e.currentTarget.value);
     console.log(item);
   };
 
+  // Handle Delete Product
   const HandleDelete = async (e) => {
     setState({ loading: true });
     let itemId = e.currentTarget.value;
@@ -191,8 +190,8 @@ export default function Store({ products }) {
     }
     setState({ loading: false });
   };
-  /*************************************** */
 
+  // Table Body
   const tableBody = (
     <TableBody>
       {products.map((row) => (
@@ -243,6 +242,20 @@ export default function Store({ products }) {
     </TableBody>
   );
 
+  // Table Pagination
+  const emptyRows =
+    rowsPerPage - Math.min(rowsPerPage, products.length - page * rowsPerPage);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // Table Footer
   const tableFooter = (
     <TableFooter>
       <TableRow>
@@ -261,6 +274,7 @@ export default function Store({ products }) {
     </TableFooter>
   );
 
+  // Render Page
   return (
     <Layout>
       <Head>
@@ -289,7 +303,9 @@ export default function Store({ products }) {
           </TextField>
         </Grid>
         <Grid md={3} item>
-          <DetalleProducto selected={ProductSelected} />
+          <DetalleProducto
+          // selected={ProductSelected}
+          />
         </Grid>
       </Grid>
       <TableContainer component={Paper}>
@@ -301,14 +317,35 @@ export default function Store({ products }) {
       </TableContainer>
     </Layout>
   );
-}
 
-export async function getStaticProps() {
-  const products = await getProducts();
-  console.log(products);
-  return {
-    props: {
-      products,
-    },
-  };
+  // const [FilterCategory, setFilterCategory] = useState("Todas");
+  // const [FilterNameProduct, setFilterNameProduct] = useState("");
+  // const HandleFilterCategory = (e) => {
+  //   setFilterCategory(e.target.value || "Todas");
+  // };
+  // const HandleFilterNameProduct = (e) => {
+  //   setFilterNameProduct(e.target.value || "");
+  // };
+
+  // const FilteredProducts = async () => {
+  //   if (FilterCategory === "Todas") {
+  //     if (FilterNameProduct === "") {
+  //       return products;
+  //     } else {
+  //       return products.filter((e) =>
+  //         e.NameProduct.includes(FilterNameProduct)
+  //       );
+  //     }
+  //   } else {
+  //     if (FilterNameProduct === "") {
+  //       return products.filter((e) => e.Category === FilterCategory);
+  //     } else {
+  //       return products.filter(
+  //         (e) =>
+  //           e.NameProduct.includes(FilterNameProduct) ||
+  //           e.Category === FilterCategory
+  //       );
+  //     }
+  //   }
+  // };
 }
