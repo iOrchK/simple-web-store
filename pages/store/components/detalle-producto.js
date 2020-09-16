@@ -9,7 +9,7 @@ import {
   TextField,
   MenuItem,
 } from "@material-ui/core";
-import { Add, Save } from "@material-ui/icons";
+import { Add, Close, Save } from "@material-ui/icons";
 import { saveProducts } from "../../../lib/store";
 
 const useStyles = makeStyles((theme) => ({
@@ -34,24 +34,23 @@ const useStyles = makeStyles((theme) => ({
 const categories = ["Bebidas", "Limpieza", "Botanas", "Cremeria"];
 
 export default function DetalleProductoComponent({ ...props }) {
-  const [SelectedProduct, setSelectedProduct] = useState(null);
-
   console.log(props.selected);
+  const [state, setState] = useState({ loading: false });
   const classes = useStyles();
   const anchor = "right";
 
-  let [state, setState] = useState({
+  const [ProductDetail, setProductDetailState] = useState({
     [anchor]: false,
   });
 
-  useEffect(() => {
-    if (SelectedProduct !== props.selected) {
-      setSelectedProduct(props.selected);
-      console.log("Show product");
-      setState({ ...state, [anchor]: true });
-    }
-    console.log("component updated");
-  });
+  // useEffect(() => {
+  //   if (SelectedProduct !== props.selected) {
+  //     setSelectedProduct(props.selected);
+  //     console.log("Show product");
+  //     setProductDetailState({ ...ProductDetail, [anchor]: true });
+  //   }
+  //   console.log("component updated");
+  // });
 
   let product = {
     NameProduct: "",
@@ -68,7 +67,7 @@ export default function DetalleProductoComponent({ ...props }) {
     ) {
       return;
     }
-    setState({ ...state, [anchor]: open });
+    setProductDetailState({ ...ProductDetail, [anchor]: open });
   };
 
   /********************************* */
@@ -171,6 +170,10 @@ export default function DetalleProductoComponent({ ...props }) {
     return false;
   };
 
+  const ClickCancel = () => {
+    setProductDetailState({ ...ProductDetail, [anchor]: false });
+  };
+
   const ClickSave = async () => {
     if (
       !(
@@ -184,6 +187,7 @@ export default function DetalleProductoComponent({ ...props }) {
       console.log("Invalid Fields");
       return;
     }
+    setState({ loading: true });
     console.log("Saving");
     let body = {
       NameProduct: NameProduct.model,
@@ -192,13 +196,17 @@ export default function DetalleProductoComponent({ ...props }) {
       ProductQuantity: ProductQuantity.model,
       Status: Status.model,
     };
-    await saveProducts(null, body);
-    document.getElementById("create-product-form").reset();
-    setNameProduct(paramDefault);
-    setCategory(paramDefault);
-    setDescription(paramDefault);
-    setProductQuantity(paramDefault);
-    setStatus(paramDefault);
+    let res = await saveProducts(null, body);
+    if (res) {
+      setNameProduct(paramDefault);
+      setCategory(paramDefault);
+      setDescription(paramDefault);
+      setProductQuantity(paramDefault);
+      setStatus(paramDefault);
+      ClickCancel();
+      alert("Producto creado");
+    }
+    setState({ loading: false });
   };
 
   /********************* */
@@ -219,7 +227,8 @@ export default function DetalleProductoComponent({ ...props }) {
       }
       <Drawer
         anchor={anchor}
-        open={state[anchor]}
+        open={ProductDetail[anchor]}
+        variant="persistent"
         onClose={toggleDrawer(anchor, false)}
       >
         <List>
@@ -239,6 +248,7 @@ export default function DetalleProductoComponent({ ...props }) {
                     fullWidth
                     error={NameProduct.error}
                     helperText={NameProduct.message}
+                    value={NameProduct.model}
                   />
                   <TextField
                     label="Categoría"
@@ -247,9 +257,10 @@ export default function DetalleProductoComponent({ ...props }) {
                     fullWidth
                     error={Category.error}
                     helperText={Category.message}
+                    value={Category.model}
                   >
                     {categories.map((option) => (
-                      <MenuItem key={option} value={option}>
+                      <MenuItem key={option || ""} value={option || ""}>
                         {option}
                       </MenuItem>
                     ))}
@@ -260,27 +271,65 @@ export default function DetalleProductoComponent({ ...props }) {
                     fullWidth
                     error={Description.error}
                     helperText={Description.message}
+                    value={Description.model}
                   />
                   <TextField
                     label="Cantidad"
+                    select
                     onChange={HandleProductQuantity}
                     fullWidth
                     error={ProductQuantity.error}
                     helperText={ProductQuantity.message}
-                  />
+                    value={ProductQuantity.model}
+                  >
+                    {[...Array(100)].map((_, i) => {
+                      i++;
+                      return (
+                        <MenuItem
+                          key={i.toString() || ""}
+                          value={i.toString() || ""}
+                        >
+                          {i}
+                        </MenuItem>
+                      );
+                    })}
+                  </TextField>
                   <TextField
                     label="Estado"
+                    select
                     onChange={HandleStatus}
                     fullWidth
                     error={Status.error}
                     helperText={Status.message}
-                  />
+                    value={Status.model}
+                  >
+                    {[
+                      { text: "Activo", value: "1" },
+                      { text: "Inactivo", value: "0" },
+                    ].map((option) => (
+                      <MenuItem
+                        key={option.value || ""}
+                        value={option.value || ""}
+                      >
+                        {option.text}
+                      </MenuItem>
+                    ))}
+                  </TextField>
                 </form>
               </div>
             </ListItemText>
           </ListItem>
           <ListItem>
             <ListItemText className={classes.buttonContainer}>
+              <Button
+                color="secondary"
+                startIcon={<Close />}
+                variant="outlined"
+                onClick={ClickCancel}
+              >
+                Cancelar
+              </Button>
+              &nbsp;
               <Button
                 color="primary"
                 startIcon={<Save />}

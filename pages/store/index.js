@@ -23,7 +23,11 @@ import DeleteIcon from "@material-ui/icons/Delete";
 import StoreIcon from "@material-ui/icons/Store";
 import PropTypes from "prop-types";
 import DetalleProducto from "./components/detalle-producto";
-import { getProducts } from "../../lib/store";
+import { getProducts, saveProducts } from "../../lib/store";
+import { Close } from "@material-ui/icons";
+import Chip from "@material-ui/core/Chip";
+import { TextField } from "@material-ui/core";
+import { MenuItem } from "@material-ui/core";
 
 const viewTitle = "Store";
 const StyledTableCell = withStyles((theme) => ({
@@ -105,9 +109,42 @@ TablePaginationActions.propTypes = {
   rowsPerPage: PropTypes.number.isRequired,
 };
 
+const categories = ["Todas", "Bebidas", "Limpieza", "Botanas", "Cremeria"];
+
 export default function Store({ products }) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [state, setState] = useState({ loading: false });
+  // const [FilterCategory, setFilterCategory] = useState("Todas");
+  // const [FilterNameProduct, setFilterNameProduct] = useState("");
+  // const HandleFilterCategory = (e) => {
+  //   setFilterCategory(e.target.value || "Todas");
+  // };
+  // const HandleFilterNameProduct = (e) => {
+  //   setFilterNameProduct(e.target.value || "");
+  // };
+
+  // const FilteredProducts = async () => {
+  //   if (FilterCategory === "Todas") {
+  //     if (FilterNameProduct === "") {
+  //       return products;
+  //     } else {
+  //       return products.filter((e) =>
+  //         e.NameProduct.includes(FilterNameProduct)
+  //       );
+  //     }
+  //   } else {
+  //     if (FilterNameProduct === "") {
+  //       return products.filter((e) => e.Category === FilterCategory);
+  //     } else {
+  //       return products.filter(
+  //         (e) =>
+  //           e.NameProduct.includes(FilterNameProduct) ||
+  //           e.Category === FilterCategory
+  //       );
+  //     }
+  //   }
+  // };
 
   const emptyRows =
     rowsPerPage - Math.min(rowsPerPage, products.length - page * rowsPerPage);
@@ -138,17 +175,22 @@ export default function Store({ products }) {
   /*************************************** */
   const paramDefault = null;
   let [ProductSelected, setProductSelected] = useState(paramDefault);
-  async function HandleEdit(event, item) {
-    event.preventDefault();
-    setProductSelected(item);
-    console.log(ProductSelected);
-  }
+  const HandleEdit = async (e) => {
+    let item = JSON.parse(e.currentTarget.value);
+    console.log(item);
+  };
 
-  async function HandleDelete(itemId) {
-    event.preventDefault();
-    // await deleteProduct(itemId);
-    console.log(itemId);
-  }
+  const HandleDelete = async (e) => {
+    setState({ loading: true });
+    let itemId = e.currentTarget.value;
+    let item = products.find((i) => i._id === itemId);
+    item.Status = 0;
+    let res = await saveProducts(itemId, item);
+    if (res) {
+      alert("Producto eliminado");
+    }
+    setState({ loading: false });
+  };
   /*************************************** */
 
   const tableBody = (
@@ -169,19 +211,26 @@ export default function Store({ products }) {
               color="primary"
               startIcon={<EditIcon />}
               small="true"
-              onClick={HandleEdit($event, row)}
+              onClick={HandleEdit}
+              value={JSON.stringify(row)}
             >
               Editar
             </Button>
-            <Button
-              variant="outlined"
-              color="secondary"
-              startIcon={<DeleteIcon />}
-              small="true"
-              onClick={HandleDelete($event, row._id)}
-            >
-              Eliminar
-            </Button>
+            &nbsp;
+            {row.Status ? (
+              <Button
+                variant="outlined"
+                color="secondary"
+                startIcon={<DeleteIcon />}
+                small="true"
+                onClick={HandleDelete}
+                value={row._id}
+              >
+                Eliminar
+              </Button>
+            ) : (
+              <Chip icon={<Close />} label="Eliminado" color="secondary" />
+            )}
           </TableCell>
         </TableRow>
       ))}
@@ -199,14 +248,11 @@ export default function Store({ products }) {
       <TableRow>
         <TablePagination
           rowsPerPageOptions={[5, 10, 25, { label: "Todos", value: -1 }]}
+          rowsPerPage={rowsPerPage}
+          labelRowsPerPage="Registros por página:"
           colSpan={7}
           count={products.length}
-          rowsPerPage={rowsPerPage}
           page={page}
-          SelectProps={{
-            inputProps: { label: "Registros por página" },
-            native: true,
-          }}
           onChangePage={handleChangePage}
           onChangeRowsPerPage={handleChangeRowsPerPage}
           ActionsComponent={TablePaginationActions}
@@ -221,17 +267,33 @@ export default function Store({ products }) {
         <title>{viewTitle}</title>
       </Head>
       <Grid container spacing={3}>
-        <Grid md={6} item>
+        <Grid md={3} item>
           <h3>
             <StoreIcon small="true" /> <span>{viewTitle}</span>
           </h3>
         </Grid>
-        <Grid md={6} item>
+        <Grid md={3} item>
+          <TextField
+            label="Nombre del producto"
+            fullWidth
+            variant="outlined"
+          ></TextField>
+        </Grid>
+        <Grid md={3} item>
+          <TextField label="Categoría" select fullWidth variant="outlined">
+            {categories.map((option) => (
+              <MenuItem key={option || ""} value={option || ""}>
+                {option}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Grid>
+        <Grid md={3} item>
           <DetalleProducto selected={ProductSelected} />
         </Grid>
       </Grid>
       <TableContainer component={Paper}>
-        <Table>
+        <Table stickyHeader>
           {tableHead}
           {tableBody}
           {tableFooter}
