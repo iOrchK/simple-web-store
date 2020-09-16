@@ -117,6 +117,7 @@ TablePaginationActions.propTypes = {
 
 const categories = ["Todas", "Bebidas", "Limpieza", "Botanas", "Cremeria"];
 
+// SWR params
 const urlProducts = "http://localhost:3001/products";
 const fetcher = (url) => axios.get(url).then((res) => res.data);
 
@@ -175,7 +176,7 @@ export default function Store() {
   // Handle Edit Product
   const HandleEdit = async (e) => {
     let item = JSON.parse(e.currentTarget.value);
-    console.log(item);
+    setProductSelected(Object.assign({}, item));
   };
 
   // Handle Delete Product
@@ -184,7 +185,7 @@ export default function Store() {
     let itemId = e.currentTarget.value;
     let item = products.find((i) => i._id === itemId);
     item.Status = 0;
-    let res = await saveProducts(itemId, item);
+    let res = await saveProducts(itemId, Object.assign({}, item));
     if (res) {
       alert("Producto eliminado");
     }
@@ -303,9 +304,7 @@ export default function Store() {
           </TextField>
         </Grid>
         <Grid md={3} item>
-          <DetalleProducto
-          // selected={ProductSelected}
-          />
+          <DetalleProducto selected={ProductSelected} />
         </Grid>
       </Grid>
       <TableContainer component={Paper}>
