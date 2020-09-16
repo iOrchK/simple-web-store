@@ -23,7 +23,9 @@ import DeleteIcon from "@material-ui/icons/Delete";
 import StoreIcon from "@material-ui/icons/Store";
 import PropTypes from "prop-types";
 import DetalleProducto from "./components/detalle-producto";
-import { getProducts } from "../../lib/store";
+import { getProducts, saveProducts } from "../../lib/store";
+import { Close } from "@material-ui/icons";
+import Chip from "@material-ui/core/Chip";
 
 const viewTitle = "Store";
 const StyledTableCell = withStyles((theme) => ({
@@ -138,14 +140,20 @@ export default function Store({ products }) {
   /*************************************** */
   const paramDefault = null;
   let [ProductSelected, setProductSelected] = useState(paramDefault);
-  const HandleEdit = async (item) => {
-    setProductSelected(item);
-    console.log(ProductSelected);
+  const HandleEdit = async (e) => {
+    let item = JSON.parse(e.currentTarget.value);
+    console.log(item);
   };
 
-  const HandleDelete = async (itemId) => {
-    // await deleteProduct(itemId);
-    console.log(itemId);
+  const HandleDelete = async (e) => {
+    let itemId = e.currentTarget.value;
+    let item = products.find((i) => i._id === itemId);
+    item.Status = 0;
+    let res = await saveProducts(itemId, item);
+    console.log(res);
+    if (res) {
+      alert("Producto eliminado");
+    }
   };
   /*************************************** */
 
@@ -167,17 +175,27 @@ export default function Store({ products }) {
               color="primary"
               startIcon={<EditIcon />}
               small="true"
+              onClick={HandleEdit}
+              value={JSON.stringify(row)}
             >
               Editar
             </Button>
-            <Button
-              variant="outlined"
-              color="secondary"
-              startIcon={<DeleteIcon />}
-              small="true"
-            >
-              Eliminar
-            </Button>
+            &nbsp;
+            {row.Status && (
+              <Button
+                variant="outlined"
+                color="secondary"
+                startIcon={<DeleteIcon />}
+                small="true"
+                onClick={HandleDelete}
+                value={row._id}
+              >
+                Eliminar
+              </Button>
+            )}
+            {!row.Status && (
+              <Chip icon={<Close />} label="Eliminado" color="secondary" />
+            )}
           </TableCell>
         </TableRow>
       ))}
@@ -195,14 +213,11 @@ export default function Store({ products }) {
       <TableRow>
         <TablePagination
           rowsPerPageOptions={[5, 10, 25, { label: "Todos", value: -1 }]}
+          rowsPerPage={rowsPerPage}
+          labelRowsPerPage="Registros por página:"
           colSpan={7}
           count={products.length}
-          rowsPerPage={rowsPerPage}
           page={page}
-          SelectProps={{
-            inputProps: { label: "Registros por página" },
-            native: true,
-          }}
           onChangePage={handleChangePage}
           onChangeRowsPerPage={handleChangeRowsPerPage}
           ActionsComponent={TablePaginationActions}
@@ -227,7 +242,7 @@ export default function Store({ products }) {
         </Grid>
       </Grid>
       <TableContainer component={Paper}>
-        <Table>
+        <Table stickyHeader>
           {tableHead}
           {tableBody}
           {tableFooter}
