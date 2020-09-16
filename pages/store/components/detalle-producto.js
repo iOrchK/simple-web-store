@@ -34,6 +34,7 @@ const useStyles = makeStyles((theme) => ({
 const categories = ["Bebidas", "Limpieza", "Botanas", "Cremeria"];
 
 export default function DetalleProductoComponent({ ...props }) {
+  console.log(props.selected);
   // const [SelectedProduct, setSelectedProduct] = useState(null);
 
   // console.log(props.selected);
@@ -196,13 +197,16 @@ export default function DetalleProductoComponent({ ...props }) {
       ProductQuantity: ProductQuantity.model,
       Status: Status.model,
     };
-    await saveProducts(null, body);
-    document.getElementById("create-product-form").reset();
-    setNameProduct(paramDefault);
-    setCategory(paramDefault);
-    setDescription(paramDefault);
-    setProductQuantity(paramDefault);
-    setStatus(paramDefault);
+    let res = await saveProducts(null, body);
+    if (res) {
+      setNameProduct(paramDefault);
+      setCategory(paramDefault);
+      setDescription(paramDefault);
+      setProductQuantity(paramDefault);
+      setStatus(paramDefault);
+      ClickCancel();
+      alert("Producto creado");
+    }
   };
 
   /********************* */
@@ -244,6 +248,7 @@ export default function DetalleProductoComponent({ ...props }) {
                     fullWidth
                     error={NameProduct.error}
                     helperText={NameProduct.message}
+                    value={NameProduct.model}
                   />
                   <TextField
                     label="Categoría"
@@ -252,9 +257,10 @@ export default function DetalleProductoComponent({ ...props }) {
                     fullWidth
                     error={Category.error}
                     helperText={Category.message}
+                    value={Category.model}
                   >
                     {categories.map((option) => (
-                      <MenuItem key={option} value={option}>
+                      <MenuItem key={option || ""} value={option || ""}>
                         {option}
                       </MenuItem>
                     ))}
@@ -265,21 +271,50 @@ export default function DetalleProductoComponent({ ...props }) {
                     fullWidth
                     error={Description.error}
                     helperText={Description.message}
+                    value={Description.model}
                   />
                   <TextField
                     label="Cantidad"
+                    select
                     onChange={HandleProductQuantity}
                     fullWidth
                     error={ProductQuantity.error}
                     helperText={ProductQuantity.message}
-                  />
+                    value={ProductQuantity.model}
+                  >
+                    {[...Array(100)].map((_, i) => {
+                      i++;
+                      return (
+                        <MenuItem
+                          key={i.toString() || ""}
+                          value={i.toString() || ""}
+                        >
+                          {i}
+                        </MenuItem>
+                      );
+                    })}
+                  </TextField>
                   <TextField
                     label="Estado"
+                    select
                     onChange={HandleStatus}
                     fullWidth
                     error={Status.error}
                     helperText={Status.message}
-                  />
+                    value={Status.model}
+                  >
+                    {[
+                      { text: "Activo", value: "1" },
+                      { text: "Inactivo", value: "0" },
+                    ].map((option) => (
+                      <MenuItem
+                        key={option.value || ""}
+                        value={option.value || ""}
+                      >
+                        {option.text}
+                      </MenuItem>
+                    ))}
+                  </TextField>
                 </form>
               </div>
             </ListItemText>
