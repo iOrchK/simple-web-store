@@ -110,6 +110,7 @@ TablePaginationActions.propTypes = {
 export default function Store({ products }) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [state, setState] = useState({ loading: false });
 
   const emptyRows =
     rowsPerPage - Math.min(rowsPerPage, products.length - page * rowsPerPage);
@@ -146,14 +147,15 @@ export default function Store({ products }) {
   };
 
   const HandleDelete = async (e) => {
+    setState({ loading: true });
     let itemId = e.currentTarget.value;
     let item = products.find((i) => i._id === itemId);
     item.Status = 0;
     let res = await saveProducts(itemId, item);
-    console.log(res);
     if (res) {
       alert("Producto eliminado");
     }
+    setState({ loading: false });
   };
   /*************************************** */
 
@@ -181,7 +183,7 @@ export default function Store({ products }) {
               Editar
             </Button>
             &nbsp;
-            {row.Status && (
+            {row.Status ? (
               <Button
                 variant="outlined"
                 color="secondary"
@@ -192,8 +194,7 @@ export default function Store({ products }) {
               >
                 Eliminar
               </Button>
-            )}
-            {!row.Status && (
+            ) : (
               <Chip icon={<Close />} label="Eliminado" color="secondary" />
             )}
           </TableCell>
