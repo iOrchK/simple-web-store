@@ -9,7 +9,7 @@ import {
   TextField,
   MenuItem,
 } from "@material-ui/core";
-import { Add, Save } from "@material-ui/icons";
+import { Add, Close, Save } from "@material-ui/icons";
 import { saveProducts } from "../../../lib/store";
 
 const useStyles = makeStyles((theme) => ({
@@ -34,9 +34,9 @@ const useStyles = makeStyles((theme) => ({
 const categories = ["Bebidas", "Limpieza", "Botanas", "Cremeria"];
 
 export default function DetalleProductoComponent({ ...props }) {
-  const [SelectedProduct, setSelectedProduct] = useState(null);
+  // const [SelectedProduct, setSelectedProduct] = useState(null);
 
-  console.log(props.selected);
+  // console.log(props.selected);
   const classes = useStyles();
   const anchor = "right";
 
@@ -44,14 +44,14 @@ export default function DetalleProductoComponent({ ...props }) {
     [anchor]: false,
   });
 
-  useEffect(() => {
-    if (SelectedProduct !== props.selected) {
-      setSelectedProduct(props.selected);
-      console.log("Show product");
-      setState({ ...state, [anchor]: true });
-    }
-    console.log("component updated");
-  });
+  // useEffect(() => {
+  //   if (SelectedProduct !== props.selected) {
+  //     setSelectedProduct(props.selected);
+  //     console.log("Show product");
+  //     setState({ ...state, [anchor]: true });
+  //   }
+  //   console.log("component updated");
+  // });
 
   let product = {
     NameProduct: "",
@@ -171,6 +171,10 @@ export default function DetalleProductoComponent({ ...props }) {
     return false;
   };
 
+  const ClickCancel = () => {
+    setState({ ...state, [anchor]: false });
+  };
+
   const ClickSave = async () => {
     if (
       !(
@@ -220,6 +224,7 @@ export default function DetalleProductoComponent({ ...props }) {
       <Drawer
         anchor={anchor}
         open={state[anchor]}
+        variant="persistent"
         onClose={toggleDrawer(anchor, false)}
       >
         <List>
@@ -281,6 +286,15 @@ export default function DetalleProductoComponent({ ...props }) {
           </ListItem>
           <ListItem>
             <ListItemText className={classes.buttonContainer}>
+              <Button
+                color="secondary"
+                startIcon={<Close />}
+                variant="outlined"
+                onClick={ClickCancel}
+              >
+                Cancelar
+              </Button>
+              &nbsp;
               <Button
                 color="primary"
                 startIcon={<Save />}
