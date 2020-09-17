@@ -11,7 +11,13 @@ import {
 } from "@material-ui/core";
 import { Add, Close, Save } from "@material-ui/icons";
 import { saveProducts } from "../../../lib/store";
+import {
+  CategoryCombo,
+  ProductQuantityCombo,
+  StatusCombo,
+} from "../../../lib/combos";
 
+// Form styles definition
 const useStyles = makeStyles((theme) => ({
   root: {
     display: "flex",
@@ -31,17 +37,38 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const categories = ["Bebidas", "Limpieza", "Botanas", "Cremeria"];
+// Drawer definition
+const anchor = "right";
+
+// Fields definition
+const fieldDefault = {
+  error: true,
+  message: "Este campo es requerido",
+  model: "",
+};
+
+// Combos list definition
+const categoryCombo = CategoryCombo;
+const productQuantityCombo = ProductQuantityCombo;
+const statusCombo = StatusCombo;
 
 export default function DetalleProductoComponent({ ...props }) {
-  console.log(props.selected);
-  const [state, setState] = useState({ loading: false });
-  const classes = useStyles();
-  const anchor = "right";
+  // console.log(props.selected);
+  // console.log(props.apiUrl);
 
+  // useState Hooks definition
+  const [state, setState] = useState({ loading: false });
+  const [NameProduct, setNameProduct] = useState(fieldDefault);
+  const [Description, setDescription] = useState(fieldDefault);
+  const [Category, setCategory] = useState(fieldDefault);
+  const [ProductQuantity, setProductQuantity] = useState(fieldDefault);
+  const [Status, setStatus] = useState(fieldDefault);
   const [ProductDetail, setProductDetailState] = useState({
     [anchor]: false,
   });
+
+  // Styles definition
+  const classes = useStyles();
 
   // useEffect(() => {
   //   if (SelectedProduct !== props.selected) {
@@ -52,14 +79,7 @@ export default function DetalleProductoComponent({ ...props }) {
   //   console.log("component updated");
   // });
 
-  let product = {
-    NameProduct: "",
-    Category: "",
-    Description: "",
-    ProductQuantity: "",
-    Status: "",
-  };
-
+  // Toggle Drawer Component
   const toggleDrawer = (anchor, open) => (event) => {
     if (
       event.type === "keydown" &&
@@ -70,111 +90,113 @@ export default function DetalleProductoComponent({ ...props }) {
     setProductDetailState({ ...ProductDetail, [anchor]: open });
   };
 
-  /********************************* */
-  const paramDefault = {
-    error: true,
-    message: "Este campo es requerido",
-    model: "",
-  };
-  let [NameProduct, setNameProduct] = useState(paramDefault);
+  // Handle NameProduct TextField Changes
   const HandleNameProduct = async (e) => {
-    product.NameProduct = e.target.value || "";
-    if (product.NameProduct === "") {
+    const { value } = e.target;
+    if (value === "") {
       setNameProduct({
         error: true,
         message: "Este campo es requerido",
-        model: e.target.value || "",
+        model: value || "",
       });
-      return product.NameProduct;
+      return true;
     }
     setNameProduct({
       error: false,
       message: "",
-      model: e.target.value || "",
+      model: value || "",
     });
-    return product.NameProduct;
+    return false;
   };
 
-  let [Category, setCategory] = useState(paramDefault);
+  // Handle Category TextField Changes
   const HandleCategory = (e) => {
-    product.Category = e.target.value || "";
-    if (product.Category === "") {
+    const { value } = e.target;
+    if (value === "") {
       setCategory({
         error: true,
         message: "Este campo es requerido",
-        model: e.target.value || "",
+        model: value || "",
       });
       return true;
     }
     setCategory({
       error: false,
       message: "",
-      model: e.target.value || "",
+      model: value || "",
     });
     return false;
   };
 
-  let [Description, setDescription] = useState(paramDefault);
+  // Handle Description TextField Changes
   const HandleDescription = (e) => {
-    if (Description.model === "") {
+    const { value } = e.target;
+    if (value === "") {
       setDescription({
         error: true,
         message: "Este campo es requerido",
-        model: e.target.value || "",
+        model: value || "",
       });
       return true;
     }
     setDescription({
       error: false,
       message: "",
-      model: e.target.value || "",
+      model: value || "",
     });
     return false;
   };
 
-  let [ProductQuantity, setProductQuantity] = useState(paramDefault);
+  // Handle ProductQuantity TextField Changes
   const HandleProductQuantity = (e) => {
-    ProductQuantity.model = e.target.value || "";
+    const { value } = e.target;
     if (ProductQuantity.model === "") {
       setProductQuantity({
         error: true,
         message: "Este campo es requerido",
-        model: e.target.value || "",
+        model: value || "",
       });
       return true;
     }
     setProductQuantity({
       error: false,
       message: "",
-      model: e.target.value || "",
+      model: value || "",
     });
     return false;
   };
 
-  let [Status, setStatus] = useState(paramDefault);
+  // Handle Status TextField Changes
   const HandleStatus = (e) => {
-    Status.model = e.target.value || "";
+    const { value } = e.target;
     if (Status.model === "") {
       setStatus({
         error: true,
         message: "Este campo es requerido",
-        model: e.target.value || "",
+        model: value || "",
       });
       return true;
     }
     setStatus({
       error: false,
       message: "",
-      model: e.target.value || "",
+      model: value || "",
     });
     return false;
   };
 
-  const ClickCancel = () => {
+  // Handle Cancel Button Clicks
+  const HandleCancel = () => {
     setProductDetailState({ ...ProductDetail, [anchor]: false });
+    setNameProduct(fieldDefault);
+    setCategory(fieldDefault);
+    setDescription(fieldDefault);
+    setProductQuantity(fieldDefault);
+    setStatus(fieldDefault);
   };
 
-  const ClickSave = async () => {
+  // Handle Submit Button Clicks
+  const HandleSubmit = async () => {
     if (
       !(
         !NameProduct.error &&
@@ -189,159 +211,160 @@ export default function DetalleProductoComponent({ ...props }) {
     }
     setState({ loading: true });
     console.log("Saving");
-    let body = {
+    const body = {
       NameProduct: NameProduct.model,
       Category: Category.model,
       Description: Description.model,
       ProductQuantity: ProductQuantity.model,
       Status: Status.model,
     };
-    let res = await saveProducts(null, body);
+    const res = await saveProducts(apiUrl, null, body);
     if (res) {
-      setNameProduct(paramDefault);
-      setCategory(paramDefault);
-      setDescription(paramDefault);
-      setProductQuantity(paramDefault);
-      setStatus(paramDefault);
-      ClickCancel();
+      HandleCancel();
       alert("Producto creado");
     }
     setState({ loading: false });
   };
 
-  /********************* */
-
+  // Render result
   return (
     <div>
-      {
-        <div className={classes.buttonContainer}>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<Add />}
-            onClick={toggleDrawer(anchor, true)}
-          >
-            Crear nuevo producto
-          </Button>
-        </div>
-      }
+      <div className={classes.buttonContainer}>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<Add />}
+          onClick={toggleDrawer(anchor, true)}
+        >
+          Crear nuevo producto
+        </Button>
+      </div>
       <Drawer
         anchor={anchor}
         open={ProductDetail[anchor]}
         variant="persistent"
         onClose={toggleDrawer(anchor, false)}
       >
-        <List>
-          <ListItem>
-            <ListItemText>
-              <h3>Detalle del producto</h3>
-            </ListItemText>
-          </ListItem>
-          <ListItem>
-            <ListItemText>
-              <div className={classes.root}>
-                <form id="create-product-form">
-                  <TextField
-                    id="standard-basic"
-                    label="Nombre del producto"
-                    onChange={HandleNameProduct}
-                    fullWidth
-                    error={NameProduct.error}
-                    helperText={NameProduct.message}
-                    value={NameProduct.model}
-                  />
-                  <TextField
-                    label="Categoría"
-                    select
-                    onChange={HandleCategory}
-                    fullWidth
-                    error={Category.error}
-                    helperText={Category.message}
-                    value={Category.model}
-                  >
-                    {categories.map((option) => (
-                      <MenuItem key={option || ""} value={option || ""}>
-                        {option}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                  <TextField
-                    label="Descripción"
-                    onChange={HandleDescription}
-                    fullWidth
-                    error={Description.error}
-                    helperText={Description.message}
-                    value={Description.model}
-                  />
-                  <TextField
-                    label="Cantidad"
-                    select
-                    onChange={HandleProductQuantity}
-                    fullWidth
-                    error={ProductQuantity.error}
-                    helperText={ProductQuantity.message}
-                    value={ProductQuantity.model}
-                  >
-                    {[...Array(100)].map((_, i) => {
-                      i++;
-                      return (
-                        <MenuItem
-                          key={i.toString() || ""}
-                          value={i.toString() || ""}
-                        >
-                          {i}
+        <form id="create-product-form" onSubmit={HandleSubmit}>
+          <List>
+            <ListItem>
+              <ListItemText>
+                <h3>Detalle del producto</h3>
+              </ListItemText>
+            </ListItem>
+            <ListItem>
+              <ListItemText>
+                <div className={classes.root}>
+                  <div>
+                    <TextField
+                      id="standard-basic"
+                      label="Nombre del producto"
+                      onChange={HandleNameProduct}
+                      fullWidth
+                      error={NameProduct.error}
+                      helperText={NameProduct.message}
+                      value={NameProduct.model}
+                    />
+                    <TextField
+                      label="Categoría"
+                      select
+                      onChange={HandleCategory}
+                      fullWidth
+                      error={Category.error}
+                      helperText={Category.message}
+                      value={Category.model}
+                    >
+                      {categoryCombo.map((option) => (
+                        <MenuItem key={option || ""} value={option || ""}>
+                          {option}
                         </MenuItem>
-                      );
-                    })}
-                  </TextField>
-                  <TextField
-                    label="Estado"
-                    select
-                    onChange={HandleStatus}
-                    fullWidth
-                    error={Status.error}
-                    helperText={Status.message}
-                    value={Status.model}
-                  >
-                    {[
-                      { text: "Activo", value: "1" },
-                      { text: "Inactivo", value: "0" },
-                    ].map((option) => (
-                      <MenuItem
-                        key={option.value || ""}
-                        value={option.value || ""}
-                      >
-                        {option.text}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </form>
-              </div>
-            </ListItemText>
-          </ListItem>
-          <ListItem>
-            <ListItemText className={classes.buttonContainer}>
-              <Button
-                color="secondary"
-                startIcon={<Close />}
-                variant="outlined"
-                onClick={ClickCancel}
-              >
-                Cancelar
-              </Button>
-              &nbsp;
-              <Button
-                color="primary"
-                startIcon={<Save />}
-                variant="outlined"
-                onClick={ClickSave}
-              >
-                Guardar
-              </Button>
-            </ListItemText>
-          </ListItem>
-        </List>
+                      ))}
+                    </TextField>
+                    <TextField
+                      label="Descripción"
+                      onChange={HandleDescription}
+                      fullWidth
+                      error={Description.error}
+                      helperText={Description.message}
+                      value={Description.model}
+                    />
+                    <TextField
+                      label="Cantidad"
+                      select
+                      onChange={HandleProductQuantity}
+                      fullWidth
+                      error={ProductQuantity.error}
+                      helperText={ProductQuantity.message}
+                      value={ProductQuantity.model}
+                    >
+                      {productQuantityCombo.map((_, i) => {
+                        i++;
+                        return (
+                          <MenuItem
+                            key={i.toString() || ""}
+                            value={i.toString() || ""}
+                          >
+                            {i}
+                          </MenuItem>
+                        );
+                      })}
+                    </TextField>
+                    <TextField
+                      label="Estado"
+                      select
+                      onChange={HandleStatus}
+                      fullWidth
+                      error={Status.error}
+                      helperText={Status.message}
+                      value={Status.model}
+                    >
+                      {statusCombo.map((option) => (
+                        <MenuItem
+                          key={option.value || ""}
+                          value={option.value || ""}
+                        >
+                          {option.text}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </div>
+                </div>
+              </ListItemText>
+            </ListItem>
+            <ListItem>
+              <ListItemText className={classes.buttonContainer}>
+                <Button
+                  color="secondary"
+                  startIcon={<Close />}
+                  variant="outlined"
+                  onClick={HandleCancel}
+                >
+                  Cancelar
+                </Button>
+                &nbsp;
+                <Button
+                  color="primary"
+                  startIcon={<Save />}
+                  variant="outlined"
+                  onClick={HandleSubmit}
+                >
+                  Guardar
+                </Button>
+                &nbsp;
+              </ListItemText>
+            </ListItem>
+          </List>
+        </form>
       </Drawer>
     </div>
   );
 }
+
+// export async function getStaticProps() {
+//   const apiUrl = `${process.env.API_URL_ROOT}/${process.env.API_PATH_PRODUCTS}`;
+//   return {
+//     props: {
+//       apiUrl,
+//     },
+//   };
+// }
