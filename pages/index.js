@@ -3,17 +3,18 @@ import Head from "next/head";
 import Layout from "../components/layout";
 import HomeIcon from "@material-ui/icons/Home";
 
-const viewTitle = "Inicio";
+// Page definitions
+const pageTitle = "Inicio";
 
 export default function Home() {
   return (
     <Layout home>
       <Head>
-        <title>{viewTitle}</title>
+        <title>{pageTitle}</title>
       </Head>
       <h3>
         <HomeIcon />
-        {viewTitle}
+        {pageTitle}
       </h3>
       <p>Bienvenido al Administrador de productos.</p>
       <span>
