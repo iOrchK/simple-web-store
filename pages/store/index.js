@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import Layout from "../../components/layout";
-import { useTheme, withStyles } from "@material-ui/core/styles";
+import { useTheme, withStyles, makeStyles } from "@material-ui/core/styles";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
@@ -23,17 +23,21 @@ import DeleteIcon from "@material-ui/icons/Delete";
 import StoreIcon from "@material-ui/icons/Store";
 import PropTypes from "prop-types";
 import DetalleProducto from "./components/detalle-producto";
-import { getProducts, saveProducts } from "../../lib/store";
+import { saveProducts } from "../../lib/store";
 import { Close } from "@material-ui/icons";
 import Chip from "@material-ui/core/Chip";
 import { TextField } from "@material-ui/core";
 import { MenuItem } from "@material-ui/core";
 import useSWR from "swr";
-import axios from "axios";
+import { CategoryFilterCombo } from "../../lib/combos";
+import { fetchProducts } from "../../lib/store";
+import Moment from "moment";
+Moment.locale("es-MX");
 
-const viewTitle = "Store";
+// Page definitions
+const pageTitle = "Store";
 
-// Change TableCell Style
+// TableCell with personalized style
 const StyledTableCell = withStyles((theme) => ({
   head: {
     backgroundColor: theme.palette.common.black,
@@ -44,8 +48,22 @@ const StyledTableCell = withStyles((theme) => ({
   },
 }))(TableCell);
 
+// Pagination Options
+const rowsPerPageOptions = [10, 25, 50, { label: "Todos", value: -1 }];
+const labelRowsPerPage = "Registros por página:";
+const colSpan = 7;
+
+// Style for Pagination Actions
+const useStyles1 = makeStyles((theme) => ({
+  root: {
+    flexShrink: 0,
+    marginLeft: theme.spacing(2.5),
+  },
+}));
+
 // Table Pagination Actions
 function TablePaginationActions(props) {
+  const classes = useStyles1();
   const theme = useTheme();
   const { count, page, rowsPerPage, onChangePage } = props;
 
@@ -66,7 +84,7 @@ function TablePaginationActions(props) {
   };
 
   return (
-    <div>
+    <div className={classes.root}>
       <IconButton
         onClick={handleFirstPageButtonClick}
         disabled={page === 0}
@@ -115,50 +133,59 @@ TablePaginationActions.propTypes = {
   rowsPerPage: PropTypes.number.isRequired,
 };
 
-const categories = ["Todas", "Bebidas", "Limpieza", "Botanas", "Cremeria"];
+// Combos definition
+const categoryFilterCombo = CategoryFilterCombo;
 
-// SWR params
-const urlProducts = "http://localhost:3001/products";
-const fetcher = (url) => axios.get(url).then((res) => res.data);
+// Filters
+const filterProducts = (products, search, category) => {
+  let result = products.filter(
+    (i) =>
+      i.NameProduct.toLowerCase().includes(search) &&
+      i.Category.includes(category === "0" ? "" : category)
+  );
+  return result;
+};
 
-export default function Store() {
-  // Hooks for useState
-  const paramDefault = null;
-  const [ProductSelected, setProductSelected] = useState(paramDefault);
+export default function Store({ apiUrl }) {
+  // useState Hooks definition
+  const [productSelected, setProductSelected] = useState(null);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [searchFilter, setSearchFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("0");
   const [state, setState] = useState({ loading: false });
 
-  // Fetch data
-  const { data, error } = useSWR(urlProducts, fetcher);
+  // Fetch Data definition
+  const { data, error } = useSWR(apiUrl, fetchProducts);
 
-  // Data Fetching Error
+  // Render Data Fetching Error
   if (error) {
     return (
       <Layout>
         <Head>
-          <title>{viewTitle}</title>
+          <title>{pageTitle}</title>
         </Head>
         <div>Error al cargar los productos</div>
       </Layout>
     );
   }
 
-  // Data Fetching Loading
+  // Render Data Fetching Loading
   if (!data) {
     return (
       <Layout>
         <Head>
-          <title>{viewTitle}</title>
+          <title>{pageTitle}</title>
         </Head>
         <div>Cargando ...</div>
       </Layout>
     );
   }
 
-  // Data fetching OK
-  let products = data;
+  // Products definition
+  const products = data;
 
+  // Table Head definition
   const tableHead = (
     <TableHead>
       <TableRow>
@@ -167,35 +194,42 @@ export default function Store() {
         <StyledTableCell component="th">Categoría</StyledTableCell>
         <StyledTableCell component="th">Descripción</StyledTableCell>
         <StyledTableCell component="th">Cantidad</StyledTableCell>
-        <StyledTableCell component="th">TimeStamp</StyledTableCell>
+        <StyledTableCell component="th">Fecha de creación</StyledTableCell>
         <StyledTableCell component="th"></StyledTableCell>
       </TableRow>
     </TableHead>
   );
 
-  // Handle Edit Product
+  // Handle Edit Button Clicks
   const HandleEdit = async (e) => {
     let item = JSON.parse(e.currentTarget.value);
     setProductSelected(Object.assign({}, item));
   };
 
-  // Handle Delete Product
+  // Handle Delete Button Clicks
   const HandleDelete = async (e) => {
     setState({ loading: true });
-    let itemId = e.currentTarget.value;
-    let item = products.find((i) => i._id === itemId);
+    const { value } = e.currentTarget;
+    const item = products.find((i) => i._id === value);
     item.Status = 0;
-    let res = await saveProducts(itemId, Object.assign({}, item));
+    const res = await saveProducts(apiUrl, value, Object.assign({}, item));
     if (res) {
       alert("Producto eliminado");
     }
     setState({ loading: false });
   };
 
-  // Table Body
+  // Empty rows definition
+  const emptyRows =
+    rowsPerPage - Math.min(rowsPerPage, products.length - page * rowsPerPage);
+
+  // Table Body definition
   const tableBody = (
     <TableBody>
-      {products.map((row) => (
+      {(rowsPerPage > 0
+        ? products.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+        : products
+      ).map((row) => (
         <TableRow key={row._id.toString()}>
           <TableCell component="th" scope="row">
             {row.IdProduct}
@@ -204,7 +238,9 @@ export default function Store() {
           <TableCell>{row.Category}</TableCell>
           <TableCell>{row.Description}</TableCell>
           <TableCell>{row.ProductQuantity}</TableCell>
-          <TableCell>{row.TimeStamp}</TableCell>
+          <TableCell>
+            {Moment(row.TimeStamp * 1000).format("LL, h:mm a")}
+          </TableCell>
           <TableCell>
             <Button
               variant="outlined"
@@ -236,35 +272,33 @@ export default function Store() {
       ))}
 
       {emptyRows > 0 && (
-        <TableRow style={{ height: 53 * emptyRows }}>
-          <TableCell colSpan={7} />
+        <TableRow style={{ height: 53 * emptyRows, backgroundColor: "silver" }}>
+          <TableCell colSpan={colSpan}></TableCell>
         </TableRow>
       )}
     </TableBody>
   );
 
-  // Table Pagination
-  const emptyRows =
-    rowsPerPage - Math.min(rowsPerPage, products.length - page * rowsPerPage);
-
+  // Handle Table Page Changes
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
 
+  // Handle Rows Per Page Changes
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
 
-  // Table Footer
+  // Table Footer definition
   const tableFooter = (
     <TableFooter>
       <TableRow>
         <TablePagination
-          rowsPerPageOptions={[5, 10, 25, { label: "Todos", value: -1 }]}
+          rowsPerPageOptions={rowsPerPageOptions}
           rowsPerPage={rowsPerPage}
-          labelRowsPerPage="Registros por página:"
-          colSpan={7}
+          labelRowsPerPage={labelRowsPerPage}
+          colSpan={colSpan}
           count={products.length}
           page={page}
           onChangePage={handleChangePage}
@@ -275,40 +309,75 @@ export default function Store() {
     </TableFooter>
   );
 
+  const HandleFormSubmit = () => {
+    console.log(products);
+  };
+
+  const HandleSearchFilter = (e) => {
+    let { value } = e.target;
+    setSearchFilter(value || "");
+  };
+
+  const HandleCategoryFilter = (e) => {
+    let { value } = e.target;
+    setCategoryFilter(value || "");
+  };
+
+  const HandleDetailClose = () => {
+    setProductSelected(null);
+  };
+
   // Render Page
   return (
     <Layout>
       <Head>
-        <title>{viewTitle}</title>
+        <title>{pageTitle}</title>
       </Head>
       <Grid container spacing={3}>
-        <Grid md={3} item>
-          <h3>
-            <StoreIcon small="true" /> <span>{viewTitle}</span>
+        <Grid lg={3} md={6} xs={12} item>
+          <h3 style={{ marginTop: 0 }}>
+            <StoreIcon small="true" /> <span>{pageTitle}</span>
           </h3>
         </Grid>
-        <Grid md={3} item>
+        <Grid lg={3} md={6} xs={12} item>
           <TextField
             label="Nombre del producto"
             fullWidth
             variant="outlined"
+            onChange={HandleSearchFilter}
+            value={searchFilter}
+            size="small"
           ></TextField>
         </Grid>
-        <Grid md={3} item>
-          <TextField label="Categoría" select fullWidth variant="outlined">
-            {categories.map((option) => (
-              <MenuItem key={option || ""} value={option || ""}>
-                {option}
-              </MenuItem>
-            ))}
-          </TextField>
+        <Grid lg={3} md={6} xs={12} item>
+          <form onSubmit={HandleFormSubmit}>
+            <TextField
+              label="Categoría"
+              select
+              fullWidth
+              variant="outlined"
+              onChange={HandleCategoryFilter}
+              value={categoryFilter}
+              size="small"
+            >
+              {categoryFilterCombo.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.text}
+                </MenuItem>
+              ))}
+            </TextField>
+          </form>
         </Grid>
-        <Grid md={3} item>
-          <DetalleProducto selected={ProductSelected} />
+        <Grid lg={3} md={6} xs={12} item>
+          <DetalleProducto
+            selected={productSelected}
+            apiUrl={apiUrl}
+            onCancel={HandleDetailClose}
+          />
         </Grid>
       </Grid>
       <TableContainer component={Paper}>
-        <Table stickyHeader>
+        <Table size="small" stickyHeader>
           {tableHead}
           {tableBody}
           {tableFooter}
@@ -316,35 +385,13 @@ export default function Store() {
       </TableContainer>
     </Layout>
   );
+}
 
-  // const [FilterCategory, setFilterCategory] = useState("Todas");
-  // const [FilterNameProduct, setFilterNameProduct] = useState("");
-  // const HandleFilterCategory = (e) => {
-  //   setFilterCategory(e.target.value || "Todas");
-  // };
-  // const HandleFilterNameProduct = (e) => {
-  //   setFilterNameProduct(e.target.value || "");
-  // };
-
-  // const FilteredProducts = async () => {
-  //   if (FilterCategory === "Todas") {
-  //     if (FilterNameProduct === "") {
-  //       return products;
-  //     } else {
-  //       return products.filter((e) =>
-  //         e.NameProduct.includes(FilterNameProduct)
-  //       );
-  //     }
-  //   } else {
-  //     if (FilterNameProduct === "") {
-  //       return products.filter((e) => e.Category === FilterCategory);
-  //     } else {
-  //       return products.filter(
-  //         (e) =>
-  //           e.NameProduct.includes(FilterNameProduct) ||
-  //           e.Category === FilterCategory
-  //       );
-  //     }
-  //   }
-  // };
+export async function getStaticProps() {
+  const apiUrl = `${process.env.API_URL_ROOT}/${process.env.API_PATH_PRODUCTS}`;
+  return {
+    props: {
+      apiUrl,
+    },
+  };
 }
