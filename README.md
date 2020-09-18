@@ -2,6 +2,17 @@
 
 Una simple aplicación web desarrollada con Nest.js con un CRUD de productos
 
+## Framework y dependencias
+
+```bash
+NextJS -> https://nextjs.org/
+React -> https://es.reactjs.org/
+Material-ui -> https://material-ui.com/
+Axios -> https://github.com/axios/axios
+Moment -> https://momentjs.com/
+SWR -> https://swr.vercel.app/
+```
+
 ## Instalación
 
 ```bash
