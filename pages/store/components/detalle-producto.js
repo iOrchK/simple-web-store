@@ -29,11 +29,11 @@ const useStyles = makeStyles((theme) => ({
   textField: {
     marginLeft: theme.spacing(1),
     marginRight: theme.spacing(1),
-    width: "25ch",
+    // width: "25ch",
   },
   buttonContainer: {
-    padding: 10,
     textAlign: "right",
+    width: "100%",
   },
 }));
 
@@ -41,11 +41,15 @@ const useStyles = makeStyles((theme) => ({
 const anchor = "right";
 
 // Fields definition
-const fieldDefault = {
-  error: true,
-  message: "Este campo es requerido",
-  model: "",
+const setFieldParams = (error, message, model) => {
+  return {
+    error: error,
+    message: message,
+    model: model,
+  };
 };
+
+const REQUIRED_FIELD = "* Este campo es requerido";
 
 // Combos list definition
 const categoryCombo = CategoryCombo;
@@ -53,31 +57,48 @@ const productQuantityCombo = ProductQuantityCombo;
 const statusCombo = StatusCombo;
 
 export default function DetalleProductoComponent({ ...props }) {
-  // console.log(props.selected);
-  // console.log(props.apiUrl);
+  // Properties definition
+  const { selected, apiUrl, onCancel } = props;
 
   // useState Hooks definition
   const [state, setState] = useState({ loading: false });
-  const [NameProduct, setNameProduct] = useState(fieldDefault);
-  const [Description, setDescription] = useState(fieldDefault);
-  const [Category, setCategory] = useState(fieldDefault);
-  const [ProductQuantity, setProductQuantity] = useState(fieldDefault);
-  const [Status, setStatus] = useState(fieldDefault);
+  const [NameProduct, setNameProduct] = useState(
+    setFieldParams(true, REQUIRED_FIELD, "")
+  );
+  const [Category, setCategory] = useState(
+    setFieldParams(false, "", categoryCombo[0])
+  );
+  const [Description, setDescription] = useState(
+    setFieldParams(true, REQUIRED_FIELD, "")
+  );
+  const [ProductQuantity, setProductQuantity] = useState(
+    setFieldParams(false, "", "1")
+  );
+  const [Status, setStatus] = useState(
+    setFieldParams(false, "", statusCombo[0].value)
+  );
   const [ProductDetail, setProductDetailState] = useState({
     [anchor]: false,
   });
+  const [isLooked, setIsLooked] = useState(false);
+
+  // Edit product
+  useEffect(() => {
+    if (selected && !isLooked) {
+      setIsLooked(true);
+      setNameProduct(setFieldParams(false, "", selected.NameProduct));
+      setCategory(setFieldParams(false, "", selected.Category));
+      setDescription(setFieldParams(false, "", selected.Description));
+      setProductQuantity(setFieldParams(false, "", selected.ProductQuantity));
+      setStatus(setFieldParams(false, "", selected.Status ? "1" : "0"));
+      setProductDetailState({ ...ProductDetail, [anchor]: true });
+    } else {
+      setIsLooked(false);
+    }
+  }, [selected, ProductDetail, anchor]);
 
   // Styles definition
   const classes = useStyles();
-
-  // useEffect(() => {
-  //   if (SelectedProduct !== props.selected) {
-  //     setSelectedProduct(props.selected);
-  //     console.log("Show product");
-  //     setProductDetailState({ ...ProductDetail, [anchor]: true });
-  //   }
-  //   console.log("component updated");
-  // });
 
   // Toggle Drawer Component
   const toggleDrawer = (anchor, open) => (event) => {
@@ -150,7 +171,7 @@ export default function DetalleProductoComponent({ ...props }) {
   // Handle ProductQuantity TextField Changes
   const HandleProductQuantity = (e) => {
     const { value } = e.target;
-    if (ProductQuantity.model === "") {
+    if (value === "") {
       setProductQuantity({
         error: true,
         message: "Este campo es requerido",
@@ -187,12 +208,13 @@ export default function DetalleProductoComponent({ ...props }) {
 
   // Handle Cancel Button Clicks
   const HandleCancel = () => {
+    setNameProduct(setFieldParams(true, REQUIRED_FIELD, ""));
+    setCategory(setFieldParams(false, "", categoryCombo[0]));
+    setDescription(setFieldParams(true, REQUIRED_FIELD, ""));
+    setProductQuantity(setFieldParams(false, "", "1"));
+    setStatus(setFieldParams(false, "", statusCombo[0].value));
     setProductDetailState({ ...ProductDetail, [anchor]: false });
-    setNameProduct(fieldDefault);
-    setCategory(fieldDefault);
-    setDescription(fieldDefault);
-    setProductQuantity(fieldDefault);
-    setStatus(fieldDefault);
+    onCancel();
   };
 
   // Handle Submit Button Clicks
@@ -218,27 +240,31 @@ export default function DetalleProductoComponent({ ...props }) {
       ProductQuantity: ProductQuantity.model,
       Status: Status.model,
     };
-    const res = await saveProducts(apiUrl, null, body);
+    const res = await saveProducts(
+      apiUrl,
+      selected ? selected._id : null,
+      body
+    );
     if (res) {
+      alert(`Producto ${selected ? "actualizado" : "creado"}`);
       HandleCancel();
-      alert("Producto creado");
     }
     setState({ loading: false });
   };
 
   // Render result
   return (
-    <div>
-      <div className={classes.buttonContainer}>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<Add />}
-          onClick={toggleDrawer(anchor, true)}
-        >
-          Crear nuevo producto
-        </Button>
-      </div>
+    <>
+      <Button
+        variant="contained"
+        color="primary"
+        startIcon={<Add />}
+        onClick={toggleDrawer(anchor, true)}
+        style={{ marginBottom: 15 }}
+        fullWidth
+      >
+        Crear nuevo producto
+      </Button>
       <Drawer
         anchor={anchor}
         open={ProductDetail[anchor]}
@@ -339,7 +365,7 @@ export default function DetalleProductoComponent({ ...props }) {
                   variant="outlined"
                   onClick={HandleCancel}
                 >
-                  Cancelar
+                  Cerrar
                 </Button>
                 &nbsp;
                 <Button
@@ -356,15 +382,6 @@ export default function DetalleProductoComponent({ ...props }) {
           </List>
         </form>
       </Drawer>
-    </div>
+    </>
   );
 }
-
-// export async function getStaticProps() {
-//   const apiUrl = `${process.env.API_URL_ROOT}/${process.env.API_PATH_PRODUCTS}`;
-//   return {
-//     props: {
-//       apiUrl,
-//     },
-//   };
-// }
