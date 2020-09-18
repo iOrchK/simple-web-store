@@ -18,6 +18,7 @@ export const siteTitle = "Administrador de productos";
 const useStyles = makeStyles({
   button: {
     marginTop: 15,
+    marginBottom: 15,
   },
 });
 
@@ -38,7 +39,7 @@ export default function LayoutComponent({ children, home }) {
 
       <header>
         <AppBar position="static">
-          <Toolbar variant="dense">
+          <Toolbar>
             <Drawer />
             <Typography variant="h6" color="inherit">
               {siteTitle}
