@@ -221,14 +221,22 @@ export default function Store({ apiUrl }) {
 
   // Empty rows definition
   const emptyRows =
-    rowsPerPage - Math.min(rowsPerPage, products.length - page * rowsPerPage);
+    rowsPerPage -
+    Math.min(
+      rowsPerPage,
+      filterProducts(products, searchFilter, categoryFilter).length -
+        page * rowsPerPage
+    );
 
   // Table Body definition
   const tableBody = (
     <TableBody>
       {(rowsPerPage > 0
-        ? products.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-        : products
+        ? filterProducts(products, searchFilter, categoryFilter).slice(
+            page * rowsPerPage,
+            page * rowsPerPage + rowsPerPage
+          )
+        : filterProducts(products, searchFilter, categoryFilter)
       ).map((row) => (
         <TableRow key={row._id.toString()}>
           <TableCell component="th" scope="row">
@@ -299,7 +307,7 @@ export default function Store({ apiUrl }) {
           rowsPerPage={rowsPerPage}
           labelRowsPerPage={labelRowsPerPage}
           colSpan={colSpan}
-          count={products.length}
+          count={filterProducts(products, searchFilter, categoryFilter).length}
           page={page}
           onChangePage={handleChangePage}
           onChangeRowsPerPage={handleChangeRowsPerPage}
@@ -310,7 +318,7 @@ export default function Store({ apiUrl }) {
   );
 
   const HandleFormSubmit = () => {
-    console.log(products);
+    console.log(filterProducts(products, searchFilter, categoryFilter));
   };
 
   const HandleSearchFilter = (e) => {
