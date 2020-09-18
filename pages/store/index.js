@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import Layout from "../../components/layout";
-import { useTheme, withStyles } from "@material-ui/core/styles";
+import { useTheme, withStyles, makeStyles } from "@material-ui/core/styles";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
@@ -49,12 +49,21 @@ const StyledTableCell = withStyles((theme) => ({
 }))(TableCell);
 
 // Pagination Options
-const rowsPerPageOptions = [5, 10, 25, { label: "Todos", value: -1 }];
+const rowsPerPageOptions = [10, 25, 50, { label: "Todos", value: -1 }];
 const labelRowsPerPage = "Registros por página:";
 const colSpan = 7;
 
+// Style for Pagination Actions
+const useStyles1 = makeStyles((theme) => ({
+  root: {
+    flexShrink: 0,
+    marginLeft: theme.spacing(2.5),
+  },
+}));
+
 // Table Pagination Actions
 function TablePaginationActions(props) {
+  const classes = useStyles1();
   const theme = useTheme();
   const { count, page, rowsPerPage, onChangePage } = props;
 
@@ -75,7 +84,7 @@ function TablePaginationActions(props) {
   };
 
   return (
-    <div>
+    <div className={classes.root}>
       <IconButton
         onClick={handleFirstPageButtonClick}
         disabled={page === 0}
@@ -127,11 +136,22 @@ TablePaginationActions.propTypes = {
 // Combos definition
 const categoryFilterCombo = CategoryFilterCombo;
 
+// Filters
+const filterProducts = (products, search, category) => {
+  let result = products.filter(
+    (i) =>
+      i.NameProduct.toLowerCase().includes(search) &&
+      i.Category.includes(category === "0" ? "" : category)
+  );
+  return result;
+};
+
 export default function Store({ apiUrl }) {
   // useState Hooks definition
   const [productSelected, setProductSelected] = useState(null);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [searchFilter, setSearchFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("0");
   const [state, setState] = useState({ loading: false });
 
@@ -174,7 +194,7 @@ export default function Store({ apiUrl }) {
         <StyledTableCell component="th">Categoría</StyledTableCell>
         <StyledTableCell component="th">Descripción</StyledTableCell>
         <StyledTableCell component="th">Cantidad</StyledTableCell>
-        <StyledTableCell component="th">TimeStamp</StyledTableCell>
+        <StyledTableCell component="th">Fecha de creación</StyledTableCell>
         <StyledTableCell component="th"></StyledTableCell>
       </TableRow>
     </TableHead>
@@ -182,9 +202,8 @@ export default function Store({ apiUrl }) {
 
   // Handle Edit Button Clicks
   const HandleEdit = async (e) => {
-    const item = JSON.parse(e.currentTarget.value);
+    let item = JSON.parse(e.currentTarget.value);
     setProductSelected(Object.assign({}, item));
-    console.log(productSelected);
   };
 
   // Handle Delete Button Clicks
@@ -207,52 +226,55 @@ export default function Store({ apiUrl }) {
   // Table Body definition
   const tableBody = (
     <TableBody>
-      {emptyRows > 0 ? (
-        <TableRow style={{ height: 53 * emptyRows }}>
-          <TableCell colSpan={colSpan}>No se encontraton productos</TableCell>
-        </TableRow>
-      ) : (
-        products.map((row) => (
-          <TableRow key={row._id.toString()}>
-            <TableCell component="th" scope="row">
-              {row.IdProduct}
-            </TableCell>
-            <TableCell>{row.NameProduct}</TableCell>
-            <TableCell>{row.Category}</TableCell>
-            <TableCell>{row.Description}</TableCell>
-            <TableCell>{row.ProductQuantity}</TableCell>
-            <TableCell>
-              {Moment(row.TimeStamp * 1000).format("LL, h:mm a")}
-            </TableCell>
-            <TableCell>
+      {(rowsPerPage > 0
+        ? products.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+        : products
+      ).map((row) => (
+        <TableRow key={row._id.toString()}>
+          <TableCell component="th" scope="row">
+            {row.IdProduct}
+          </TableCell>
+          <TableCell>{row.NameProduct}</TableCell>
+          <TableCell>{row.Category}</TableCell>
+          <TableCell>{row.Description}</TableCell>
+          <TableCell>{row.ProductQuantity}</TableCell>
+          <TableCell>
+            {Moment(row.TimeStamp * 1000).format("LL, h:mm a")}
+          </TableCell>
+          <TableCell>
+            <Button
+              variant="outlined"
+              color="primary"
+              startIcon={<EditIcon />}
+              small="true"
+              onClick={HandleEdit}
+              value={JSON.stringify(row)}
+            >
+              Editar
+            </Button>
+            &nbsp;
+            {row.Status ? (
               <Button
                 variant="outlined"
-                color="primary"
-                startIcon={<EditIcon />}
+                color="secondary"
+                startIcon={<DeleteIcon />}
                 small="true"
-                onClick={HandleEdit}
-                value={JSON.stringify(row)}
+                onClick={HandleDelete}
+                value={row._id}
               >
-                Editar
+                Eliminar
               </Button>
-              &nbsp;
-              {row.Status ? (
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  startIcon={<DeleteIcon />}
-                  small="true"
-                  onClick={HandleDelete}
-                  value={row._id}
-                >
-                  Eliminar
-                </Button>
-              ) : (
-                <Chip icon={<Close />} label="Eliminado" color="secondary" />
-              )}
-            </TableCell>
-          </TableRow>
-        ))
+            ) : (
+              <Chip icon={<Close />} label="Eliminado" color="secondary" />
+            )}
+          </TableCell>
+        </TableRow>
+      ))}
+
+      {emptyRows > 0 && (
+        <TableRow style={{ height: 53 * emptyRows, backgroundColor: "silver" }}>
+          <TableCell colSpan={colSpan}></TableCell>
+        </TableRow>
       )}
     </TableBody>
   );
@@ -291,10 +313,18 @@ export default function Store({ apiUrl }) {
     console.log(products);
   };
 
+  const HandleSearchFilter = (e) => {
+    let { value } = e.target;
+    setSearchFilter(value || "");
+  };
+
   const HandleCategoryFilter = (e) => {
-    const { value } = e.target;
-    console.log(value);
+    let { value } = e.target;
     setCategoryFilter(value || "");
+  };
+
+  const HandleDetailClose = () => {
+    setProductSelected(null);
   };
 
   // Render Page
@@ -304,19 +334,22 @@ export default function Store({ apiUrl }) {
         <title>{pageTitle}</title>
       </Head>
       <Grid container spacing={3}>
-        <Grid md={3} item>
-          <h3>
+        <Grid lg={3} md={6} xs={12} item>
+          <h3 style={{ marginTop: 0 }}>
             <StoreIcon small="true" /> <span>{pageTitle}</span>
           </h3>
         </Grid>
-        <Grid md={3} item>
+        <Grid lg={3} md={6} xs={12} item>
           <TextField
             label="Nombre del producto"
             fullWidth
             variant="outlined"
+            onChange={HandleSearchFilter}
+            value={searchFilter}
+            size="small"
           ></TextField>
         </Grid>
-        <Grid md={3} item>
+        <Grid lg={3} md={6} xs={12} item>
           <form onSubmit={HandleFormSubmit}>
             <TextField
               label="Categoría"
@@ -325,6 +358,7 @@ export default function Store({ apiUrl }) {
               variant="outlined"
               onChange={HandleCategoryFilter}
               value={categoryFilter}
+              size="small"
             >
               {categoryFilterCombo.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
@@ -334,8 +368,12 @@ export default function Store({ apiUrl }) {
             </TextField>
           </form>
         </Grid>
-        <Grid md={3} item>
-          <DetalleProducto selected={productSelected} />
+        <Grid lg={3} md={6} xs={12} item>
+          <DetalleProducto
+            selected={productSelected}
+            apiUrl={apiUrl}
+            onCancel={HandleDetailClose}
+          />
         </Grid>
       </Grid>
       <TableContainer component={Paper}>
@@ -347,37 +385,6 @@ export default function Store({ apiUrl }) {
       </TableContainer>
     </Layout>
   );
-
-  // const [FilterCategory, setFilterCategory] = useState("Todas");
-  // const [FilterNameProduct, setFilterNameProduct] = useState("");
-  // const HandleFilterCategory = (e) => {
-  //   setFilterCategory(e.target.value || "Todas");
-  // };
-  // const HandleFilterNameProduct = (e) => {
-  //   setFilterNameProduct(e.target.value || "");
-  // };
-
-  // const FilteredProducts = async () => {
-  //   if (FilterCategory === "Todas") {
-  //     if (FilterNameProduct === "") {
-  //       return products;
-  //     } else {
-  //       return products.filter((e) =>
-  //         e.NameProduct.includes(FilterNameProduct)
-  //       );
-  //     }
-  //   } else {
-  //     if (FilterNameProduct === "") {
-  //       return products.filter((e) => e.Category === FilterCategory);
-  //     } else {
-  //       return products.filter(
-  //         (e) =>
-  //           e.NameProduct.includes(FilterNameProduct) ||
-  //           e.Category === FilterCategory
-  //       );
-  //     }
-  //   }
-  // };
 }
 
 export async function getStaticProps() {
